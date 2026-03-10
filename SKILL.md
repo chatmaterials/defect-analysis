@@ -1,6 +1,6 @@
 ---
 name: "defect-analysis"
-description: "Use when the task is to analyze defect-related DFT results, including neutral defect formation energies, stoichiometric changes, structural distortion around a defect, and compact markdown reports from pristine and defect calculations."
+description: "Use when the task is to analyze defect-related DFT results, including neutral defect formation energies, stoichiometric changes, structural distortion around a defect, and compact markdown reports from pristine and defect calculations. Supports VASP, QE, and ABINIT-style inputs."
 ---
 
 # Defect Analysis
@@ -13,6 +13,12 @@ Use this skill for defect-focused post-processing rather than generic workflow s
 - summarize how stoichiometry changes between pristine and defect cells
 - quantify structural or volume change caused by a defect
 - write a compact defect-analysis report from finished calculations
+
+Supported backends:
+
+- VASP-like directories with `OUTCAR` and `POSCAR`
+- QE-like directories with `.out` and structural input blocks
+- ABINIT-like directories with `.abo` and `.abi`
 
 ## Use the bundled helpers
 

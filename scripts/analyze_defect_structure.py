@@ -6,29 +6,14 @@ import argparse
 import json
 from pathlib import Path
 
-
-def read_poscar(path: Path) -> dict[str, object]:
-    lines = path.read_text().splitlines()
-    scale = float(lines[1].split()[0])
-    lattice = [[float(x) * scale for x in lines[i].split()] for i in range(2, 5)]
-    species = lines[5].split()
-    counts = [int(x) for x in lines[6].split()]
-    natoms = sum(counts)
-    return {"lattice": lattice, "species": species, "counts": counts, "natoms": natoms}
-
-
-def volume(cell: list[list[float]]) -> float:
-    a, b, c = cell
-    return (
-        a[0] * (b[1] * c[2] - b[2] * c[1])
-        - a[1] * (b[0] * c[2] - b[2] * c[0])
-        + a[2] * (b[0] * c[1] - b[1] * c[0])
-    )
+from defect_io import read_structure, volume
 
 
 def analyze(pristine: Path, defect: Path) -> dict[str, object]:
-    a = read_poscar(pristine)
-    b = read_poscar(defect)
+    backend_a, a = read_structure(pristine)
+    backend_b, b = read_structure(defect)
+    if backend_a != backend_b:
+        raise SystemExit("Pristine and defect structures must use the same backend for direct comparison")
     vol_a = volume(a["lattice"])
     vol_b = volume(b["lattice"])
     species_delta = {}
@@ -38,6 +23,7 @@ def analyze(pristine: Path, defect: Path) -> dict[str, object]:
         count_b = b["counts"][b["species"].index(specie)] if specie in b["species"] else 0
         species_delta[specie] = count_b - count_a
     return {
+        "backend": backend_a,
         "pristine": str(pristine),
         "defect": str(defect),
         "natoms_pristine": a["natoms"],

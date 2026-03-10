@@ -4,6 +4,8 @@
 
 Standalone skill for defect-focused DFT result analysis.
 
+Supports VASP, QE, and ABINIT-style pristine/defect inputs.
+
 ## Install
 
 ```bash
@@ -16,6 +18,8 @@ npx skills add chatmaterials/defect-analysis -g -y
 python3 -m py_compile scripts/*.py
 npx skills add . --list
 python3 scripts/analyze_defect_formation.py fixtures/pristine fixtures/defect --species O --delta -1 --mu -4.0 --json
+python3 scripts/analyze_defect_formation.py fixtures/qe/pristine fixtures/qe/defect --species O --delta -1 --mu -4.0 --json
+python3 scripts/analyze_defect_formation.py fixtures/abinit/pristine fixtures/abinit/defect --species O --delta -1 --mu -4.0 --json
 python3 scripts/analyze_defect_structure.py fixtures/pristine/POSCAR fixtures/defect/POSCAR --json
 python3 scripts/export_defect_report.py fixtures/pristine fixtures/defect --species O --delta -1 --mu -4.0
 python3 scripts/run_regression.py

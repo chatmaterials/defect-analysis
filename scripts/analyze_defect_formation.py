@@ -4,24 +4,19 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 from pathlib import Path
 
-
-def read_energy(path: Path) -> float:
-    outcar = path / "OUTCAR" if path.is_dir() else path
-    text = outcar.read_text(errors="ignore")
-    matches = re.findall(r"TOTEN\s*=\s*([\-0-9.Ee+]+)", text)
-    if not matches:
-        raise SystemExit(f"No TOTEN found in {outcar}")
-    return float(matches[-1])
+from defect_io import read_energy
 
 
 def analyze(pristine: Path, defect: Path, species: str, delta: int, mu: float) -> dict[str, object]:
-    e_bulk = read_energy(pristine)
-    e_def = read_energy(defect)
+    backend_pristine, e_bulk = read_energy(pristine)
+    backend_defect, e_def = read_energy(defect)
+    if backend_pristine != backend_defect:
+        raise SystemExit("Pristine and defect states must use the same backend for direct comparison")
     e_form = e_def - e_bulk - delta * mu
     return {
+        "backend": backend_pristine,
         "pristine": str(pristine),
         "defect": str(defect),
         "species": species,
