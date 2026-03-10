@@ -12,10 +12,13 @@ from analyze_defect_structure import analyze as analyze_structure
 def screening_note(formation: dict[str, object], structure: dict[str, object]) -> str:
     e_form = float(formation["formation_energy_eV"])
     strain = abs(float(structure["relative_volume_change_percent"]))
+    abundance = formation.get("abundance_class")
     if e_form <= 1.0 and strain <= 5.0:
         return "This defect looks relatively accessible in a compact neutral-defect screen: low formation energy and limited structural swelling."
     if e_form > 2.5:
         return "The neutral formation energy is high enough that this defect is unlikely to be abundant without strong thermodynamic driving forces."
+    if abundance == "trace-like":
+        return "This defect is thermodynamically allowed in the compact model, but the estimated abundance remains trace-like under the supplied conditions."
     if strain > 10.0:
         return "The structural response is large enough that local strain accommodation may be important."
     return "The defect is intermediate in this compact screen and may need charged-defect or concentration analysis before stronger claims."
@@ -29,9 +32,11 @@ def render_markdown(formation: dict[str, object], structure: dict[str, object]) 
         f"- Defect type: `{formation['defect_type']}`",
         f"- Species: `{formation['species']}`",
         f"- Delta species: `{formation['delta_species']}`",
-        f"- Chemical potential (eV): `{formation['chemical_potential_eV']:.4f}`",
+        f"- Chemical potential terms: `{formation['chemical_potential_terms']}`",
         f"- Formation energy (eV): `{formation['formation_energy_eV']:.4f}`",
         f"- Equilibrium fraction: `{formation['equilibrium_fraction']:.4e}`" if formation["equilibrium_fraction"] is not None else "- Equilibrium fraction: `n/a`",
+        f"- Equilibrium concentration (cm^-3): `{formation['equilibrium_concentration_cm3']:.4e}`" if formation["equilibrium_concentration_cm3"] is not None else "- Equilibrium concentration (cm^-3): `n/a`",
+        f"- Abundance class: `{formation['abundance_class']}`" if formation["abundance_class"] is not None else "- Abundance class: `n/a`",
         "",
         "## Structural Change",
         f"- Pristine atoms: `{structure['natoms_pristine']}`",

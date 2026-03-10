@@ -32,10 +32,23 @@ def main() -> None:
     ensure(formation["defect_type"] == "vacancy-like", "defect-analysis should infer a vacancy-like defect")
     ensure(formation["species"] == "O" and formation["delta_species"] == -1, "defect-analysis should infer the missing species and count")
     ensure(formation["equilibrium_fraction"] is not None and formation["equilibrium_fraction"] > 0, "defect-analysis should estimate an equilibrium fraction when temperature is provided")
+    ensure(formation["abundance_class"] == "trace-like", "defect-analysis should classify the dilute abundance scale")
     qe_formation = run_json("scripts/analyze_defect_formation.py", "fixtures/qe/pristine", "fixtures/qe/defect", "--mu", "-4.0", "--json")
     ensure(abs(qe_formation["formation_energy_eV"] - 2.0) < 1e-4, "QE defect formation energy should parse")
     abinit_formation = run_json("scripts/analyze_defect_formation.py", "fixtures/abinit/pristine", "fixtures/abinit/defect", "--mu", "-4.0", "--json")
     ensure(abs(abinit_formation["formation_energy_eV"] - 2.0) < 1e-4, "ABINIT defect formation energy should parse")
+    substitutional = run_json(
+        "scripts/analyze_defect_formation.py",
+        "fixtures/substitutional/pristine",
+        "fixtures/substitutional/defect",
+        "--mu-term",
+        "Fe=-6.0",
+        "--mu-term",
+        "Li=-1.5",
+        "--json",
+    )
+    ensure(abs(substitutional["formation_energy_eV"] - 1.5) < 1e-6, "defect-analysis should support multi-species chemical-potential terms")
+    ensure("substitutional-like" in substitutional["defect_type"], "defect-analysis should infer a substitutional-like defect")
     structure = run_json("scripts/analyze_defect_structure.py", "fixtures/pristine/POSCAR", "fixtures/defect/POSCAR", "--json")
     ensure(structure["species_delta"]["O"] == -1, "defect structure analysis should detect one missing O atom")
     ensure(structure["relative_volume_change_percent"] > 0, "defect structure analysis should detect positive volume expansion")
@@ -52,6 +65,14 @@ def main() -> None:
         "-4.0",
         "--max-volume-change-percent",
         "5.0",
+        "--temperature-k",
+        "1000",
+        "--site-density-cm3",
+        "1e22",
+        "--target-defect-type",
+        "vacancy-like",
+        "--target-concentration-cm3",
+        "1e10",
         "--json",
     )
     ensure(ranked["best_case"] == "fixtures", "defect-analysis should rank the lower-energy vacancy ahead of the high-energy candidate")
