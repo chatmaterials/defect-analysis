@@ -2,7 +2,7 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/chatmaterials/defect-analysis/ci.yml?branch=main&label=CI)](https://github.com/chatmaterials/defect-analysis/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/chatmaterials/defect-analysis?display_name=tag)](https://github.com/chatmaterials/defect-analysis/releases)
 
-Standalone skill for defect-focused DFT result analysis.
+Standalone skill for defect-focused DFT result analysis, including automatic defect-type inference and multi-candidate screening.
 
 Supports VASP, QE, and ABINIT-style pristine/defect inputs.
 
@@ -17,10 +17,11 @@ npx skills add chatmaterials/defect-analysis -g -y
 ```bash
 python3 -m py_compile scripts/*.py
 npx skills add . --list
-python3 scripts/analyze_defect_formation.py fixtures/pristine fixtures/defect --species O --delta -1 --mu -4.0 --json
-python3 scripts/analyze_defect_formation.py fixtures/qe/pristine fixtures/qe/defect --species O --delta -1 --mu -4.0 --json
-python3 scripts/analyze_defect_formation.py fixtures/abinit/pristine fixtures/abinit/defect --species O --delta -1 --mu -4.0 --json
+python3 scripts/analyze_defect_formation.py fixtures/pristine fixtures/defect --mu -4.0 --temperature-k 1000 --site-density-cm3 1e22 --json
+python3 scripts/analyze_defect_formation.py fixtures/qe/pristine fixtures/qe/defect --mu -4.0 --json
+python3 scripts/analyze_defect_formation.py fixtures/abinit/pristine fixtures/abinit/defect --mu -4.0 --json
 python3 scripts/analyze_defect_structure.py fixtures/pristine/POSCAR fixtures/defect/POSCAR --json
-python3 scripts/export_defect_report.py fixtures/pristine fixtures/defect --species O --delta -1 --mu -4.0
+python3 scripts/compare_defect_candidates.py fixtures fixtures/candidates/high-energy-vacancy --mu -4.0 --max-volume-change-percent 5.0 --json
+python3 scripts/export_defect_report.py fixtures/pristine fixtures/defect --mu -4.0 --temperature-k 1000
 python3 scripts/run_regression.py
 ```

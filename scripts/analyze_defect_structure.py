@@ -6,7 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
-from defect_io import read_structure, volume
+from defect_io import classify_defect, read_structure, species_delta, volume
 
 
 def analyze(pristine: Path, defect: Path) -> dict[str, object]:
@@ -16,12 +16,9 @@ def analyze(pristine: Path, defect: Path) -> dict[str, object]:
         raise SystemExit("Pristine and defect structures must use the same backend for direct comparison")
     vol_a = volume(a["lattice"])
     vol_b = volume(b["lattice"])
-    species_delta = {}
-    all_species = sorted(set(a["species"]) | set(b["species"]))
-    for specie in all_species:
-        count_a = a["counts"][a["species"].index(specie)] if specie in a["species"] else 0
-        count_b = b["counts"][b["species"].index(specie)] if specie in b["species"] else 0
-        species_delta[specie] = count_b - count_a
+    delta_map = species_delta(a, b)
+    defect_type, primary_species, primary_delta = classify_defect(delta_map)
+    changed_atoms = sum(abs(value) for value in delta_map.values())
     return {
         "backend": backend_a,
         "pristine": str(pristine),
@@ -31,7 +28,11 @@ def analyze(pristine: Path, defect: Path) -> dict[str, object]:
         "volume_initial_A3": vol_a,
         "volume_final_A3": vol_b,
         "relative_volume_change_percent": (vol_b - vol_a) / vol_a * 100.0,
-        "species_delta": species_delta,
+        "volume_change_per_changed_atom_A3": (vol_b - vol_a) / changed_atoms if changed_atoms > 0 else None,
+        "species_delta": delta_map,
+        "defect_type": defect_type,
+        "primary_species": primary_species,
+        "primary_delta": primary_delta,
         "observations": ["Structural and stoichiometric changes were summarized from the two POSCAR-like structures."],
     }
 

@@ -27,19 +27,34 @@ def ensure(condition: bool, message: str) -> None:
 
 
 def main() -> None:
-    formation = run_json("scripts/analyze_defect_formation.py", "fixtures/pristine", "fixtures/defect", "--species", "O", "--delta", "-1", "--mu", "-4.0", "--json")
+    formation = run_json("scripts/analyze_defect_formation.py", "fixtures/pristine", "fixtures/defect", "--mu", "-4.0", "--temperature-k", "1000", "--site-density-cm3", "1e22", "--json")
     ensure(abs(formation["formation_energy_eV"] - 2.0) < 1e-6, "defect formation energy should parse")
-    qe_formation = run_json("scripts/analyze_defect_formation.py", "fixtures/qe/pristine", "fixtures/qe/defect", "--species", "O", "--delta", "-1", "--mu", "-4.0", "--json")
+    ensure(formation["defect_type"] == "vacancy-like", "defect-analysis should infer a vacancy-like defect")
+    ensure(formation["species"] == "O" and formation["delta_species"] == -1, "defect-analysis should infer the missing species and count")
+    ensure(formation["equilibrium_fraction"] is not None and formation["equilibrium_fraction"] > 0, "defect-analysis should estimate an equilibrium fraction when temperature is provided")
+    qe_formation = run_json("scripts/analyze_defect_formation.py", "fixtures/qe/pristine", "fixtures/qe/defect", "--mu", "-4.0", "--json")
     ensure(abs(qe_formation["formation_energy_eV"] - 2.0) < 1e-4, "QE defect formation energy should parse")
-    abinit_formation = run_json("scripts/analyze_defect_formation.py", "fixtures/abinit/pristine", "fixtures/abinit/defect", "--species", "O", "--delta", "-1", "--mu", "-4.0", "--json")
+    abinit_formation = run_json("scripts/analyze_defect_formation.py", "fixtures/abinit/pristine", "fixtures/abinit/defect", "--mu", "-4.0", "--json")
     ensure(abs(abinit_formation["formation_energy_eV"] - 2.0) < 1e-4, "ABINIT defect formation energy should parse")
     structure = run_json("scripts/analyze_defect_structure.py", "fixtures/pristine/POSCAR", "fixtures/defect/POSCAR", "--json")
     ensure(structure["species_delta"]["O"] == -1, "defect structure analysis should detect one missing O atom")
     ensure(structure["relative_volume_change_percent"] > 0, "defect structure analysis should detect positive volume expansion")
+    ensure(structure["defect_type"] == "vacancy-like", "defect structure analysis should infer a vacancy-like defect")
     qe_structure = run_json("scripts/analyze_defect_structure.py", "fixtures/qe/pristine", "fixtures/qe/defect", "--json")
     ensure(qe_structure["species_delta"]["O"] == -1, "QE defect structure analysis should detect one missing O atom")
     abinit_structure = run_json("scripts/analyze_defect_structure.py", "fixtures/abinit/pristine", "fixtures/abinit/defect", "--json")
     ensure(abinit_structure["species_delta"]["O"] == -1, "ABINIT defect structure analysis should detect one missing O atom")
+    ranked = run_json(
+        "scripts/compare_defect_candidates.py",
+        "fixtures",
+        "fixtures/candidates/high-energy-vacancy",
+        "--mu",
+        "-4.0",
+        "--max-volume-change-percent",
+        "5.0",
+        "--json",
+    )
+    ensure(ranked["best_case"] == "fixtures", "defect-analysis should rank the lower-energy vacancy ahead of the high-energy candidate")
     temp_dir = Path(tempfile.mkdtemp(prefix="defect-analysis-report-"))
     try:
         report_path = Path(
@@ -47,12 +62,10 @@ def main() -> None:
                 "scripts/export_defect_report.py",
                 "fixtures/pristine",
                 "fixtures/defect",
-                "--species",
-                "O",
-                "--delta",
-                "-1",
                 "--mu",
                 "-4.0",
+                "--temperature-k",
+                "1000",
                 "--output",
                 str(temp_dir / "DEFECT_REPORT.md"),
             ).stdout.strip()
@@ -60,6 +73,7 @@ def main() -> None:
         report_text = report_path.read_text()
         ensure("# Defect Analysis Report" in report_text, "defect report should have a heading")
         ensure("Formation energy" in report_text, "defect report should include the formation energy")
+        ensure("## Screening Note" in report_text, "defect report should include a screening note")
     finally:
         shutil.rmtree(temp_dir)
     print("defect-analysis regression passed")

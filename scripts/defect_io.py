@@ -9,6 +9,7 @@ from pathlib import Path
 RY_TO_EV = 13.605693009
 HARTREE_TO_EV = 27.211386018
 BOHR_TO_ANG = 0.529177210903
+KB_EV_K = 8.617333262145e-5
 
 
 def read_text(path: Path) -> str:
@@ -125,3 +126,52 @@ def read_structure(path: Path) -> tuple[str, dict[str, object]]:
         for idx, _ in enumerate(species, start=1):
             counts.append(sum(1 for value in typats if value == idx))
     return backend, {"lattice": lattice, "species": species, "counts": counts, "natoms": sum(counts)}
+
+
+def composition_map(structure: dict[str, object]) -> dict[str, int]:
+    species = [str(label) for label in structure.get("species", [])]
+    counts = [int(value) for value in structure.get("counts", [])]
+    return {species[i]: counts[i] for i in range(min(len(species), len(counts)))}
+
+
+def species_delta(pristine: dict[str, object], defect: dict[str, object]) -> dict[str, int]:
+    comp_a = composition_map(pristine)
+    comp_b = composition_map(defect)
+    labels = sorted(set(comp_a) | set(comp_b))
+    return {label: comp_b.get(label, 0) - comp_a.get(label, 0) for label in labels if comp_b.get(label, 0) - comp_a.get(label, 0) != 0}
+
+
+def classify_defect(delta_map: dict[str, int]) -> tuple[str, str | None, int | None]:
+    negative = {label: delta for label, delta in delta_map.items() if delta < 0}
+    positive = {label: delta for label, delta in delta_map.items() if delta > 0}
+    if len(negative) == 1 and not positive:
+        label, delta = next(iter(negative.items()))
+        return ("vacancy-like" if delta == -1 else "multivacancy-like", label, delta)
+    if len(positive) == 1 and not negative:
+        label, delta = next(iter(positive.items()))
+        return ("interstitial-like" if delta == 1 else "multi-interstitial-like", label, delta)
+    if len(positive) == 1 and len(negative) == 1:
+        removed_label, removed_delta = next(iter(negative.items()))
+        added_label, added_delta = next(iter(positive.items()))
+        if abs(removed_delta) == abs(added_delta) == 1:
+            return (f"substitutional-like ({removed_label}->{added_label})", removed_label, removed_delta)
+        return ("complex-substitution-like", removed_label, removed_delta)
+    return ("complex-like", None, None)
+
+
+def infer_species_and_delta(pristine_path: Path, defect_path: Path, species: str | None = None, delta: int | None = None) -> tuple[str | None, int | None, str, dict[str, int]]:
+    _, pristine = read_structure(pristine_path)
+    _, defect = read_structure(defect_path)
+    delta_map = species_delta(pristine, defect)
+    defect_type, inferred_species, inferred_delta = classify_defect(delta_map)
+    if species is None:
+        species = inferred_species
+    if delta is None:
+        delta = inferred_delta
+    return species, delta, defect_type, delta_map
+
+
+def equilibrium_fraction(formation_energy_eV: float, temperature_K: float) -> float:
+    if temperature_K <= 0:
+        raise SystemExit("Temperature must be positive when estimating an equilibrium concentration")
+    return float(pow(2.718281828459045, -formation_energy_eV / (KB_EV_K * temperature_K)))
