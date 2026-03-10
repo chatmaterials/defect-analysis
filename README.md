@@ -1,5 +1,7 @@
 # defect-analysis
 
+[![CI](https://img.shields.io/github/actions/workflow/status/chatmaterials/defect-analysis/ci.yml?branch=main&label=CI)](https://github.com/chatmaterials/defect-analysis/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/chatmaterials/defect-analysis?display_name=tag)](https://github.com/chatmaterials/defect-analysis/releases)
+
 Standalone skill for defect-focused DFT result analysis.
 
 ## Install
