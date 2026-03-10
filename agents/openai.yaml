@@ -1,0 +1,5 @@
+interface:
+  display_name: "Defect Analysis"
+  short_description: "Analyze defect energies and structural changes"
+  brand_color: "#7C3AED"
+  default_prompt: "Use $defect-analysis to analyze defect formation energies or structural distortion from DFT results."
