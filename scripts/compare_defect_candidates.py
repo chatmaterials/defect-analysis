@@ -21,6 +21,7 @@ def analyze_case(
     site_density_cm3: float | None,
     target_defect_type: str | None,
     target_concentration_cm3: float | None,
+    mode: str,
 ) -> dict[str, object]:
     pristine = root / "pristine"
     defect = root / "defect"
@@ -33,7 +34,14 @@ def analyze_case(
     abundance_penalty = 0.0
     if target_concentration_cm3 is not None:
         abundance_penalty = max(0.0, target_concentration_cm3 - (float(concentration) if concentration is not None else 0.0)) / target_concentration_cm3
-    score = formation_penalty + strain_penalty + type_penalty + abundance_penalty
+    if mode == "abundant":
+        score = 0.5 * formation_penalty + 0.5 * strain_penalty + 0.5 * type_penalty + 2.0 * abundance_penalty
+    elif mode == "substitutional":
+        score = 0.75 * formation_penalty + 0.5 * strain_penalty + 2.0 * type_penalty + 0.5 * abundance_penalty
+    elif mode == "strain-sensitive":
+        score = formation_penalty + 2.0 * strain_penalty + type_penalty + 0.5 * abundance_penalty
+    else:
+        score = formation_penalty + strain_penalty + type_penalty + abundance_penalty
     return {
         "case": root.name,
         "path": str(root),
@@ -48,6 +56,7 @@ def analyze_case(
         "strain_penalty": strain_penalty,
         "type_penalty": type_penalty,
         "abundance_penalty": abundance_penalty,
+        "mode": mode,
         "screening_score": score,
     }
 
@@ -63,9 +72,10 @@ def analyze_cases(
     site_density_cm3: float | None,
     target_defect_type: str | None,
     target_concentration_cm3: float | None,
+    mode: str,
 ) -> dict[str, object]:
     cases = [
-        analyze_case(root, mu, species, delta, max_volume_change_percent, mu_terms, temperature_K, site_density_cm3, target_defect_type, target_concentration_cm3)
+        analyze_case(root, mu, species, delta, max_volume_change_percent, mu_terms, temperature_K, site_density_cm3, target_defect_type, target_concentration_cm3, mode)
         for root in roots
     ]
     ranked = sorted(cases, key=lambda item: item["screening_score"])
@@ -73,7 +83,8 @@ def analyze_cases(
         "chemical_potential_eV": mu,
         "chemical_potential_terms": mu_terms,
         "max_volume_change_percent": max_volume_change_percent,
-        "ranking_basis": "screening_score = formation_penalty + strain_penalty + type_penalty + abundance_penalty",
+        "mode": mode,
+        "ranking_basis": "screening_score = weighted(formation_penalty, strain_penalty, type_penalty, abundance_penalty)",
         "cases": ranked,
         "best_case": ranked[0]["case"] if ranked else None,
         "observations": [
@@ -94,6 +105,7 @@ def main() -> None:
     parser.add_argument("--site-density-cm3", type=float)
     parser.add_argument("--target-defect-type")
     parser.add_argument("--target-concentration-cm3", type=float)
+    parser.add_argument("--mode", choices=["balanced", "abundant", "substitutional", "strain-sensitive"], default="balanced")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
     if args.mu is None and not args.mu_term:
@@ -109,6 +121,7 @@ def main() -> None:
         args.site_density_cm3,
         args.target_defect_type,
         args.target_concentration_cm3,
+        args.mode,
     )
     if args.json:
         print(json.dumps(payload, indent=2))

@@ -73,9 +73,30 @@ def main() -> None:
         "vacancy-like",
         "--target-concentration-cm3",
         "1e10",
+        "--mode",
+        "balanced",
         "--json",
     )
     ensure(ranked["best_case"] == "fixtures", "defect-analysis should rank the lower-energy vacancy ahead of the high-energy candidate")
+    substitutional_ranked = run_json(
+        "scripts/compare_defect_candidates.py",
+        "fixtures/substitutional",
+        "fixtures",
+        "--mu",
+        "-4.0",
+        "--mu-term",
+        "Fe=-6.0",
+        "--mu-term",
+        "Li=-1.5",
+        "--max-volume-change-percent",
+        "5.0",
+        "--target-defect-type",
+        "substitutional-like",
+        "--mode",
+        "substitutional",
+        "--json",
+    )
+    ensure(substitutional_ranked["best_case"] == "substitutional", "defect-analysis should rank the substitutional candidate first in substitutional mode")
     temp_dir = Path(tempfile.mkdtemp(prefix="defect-analysis-report-"))
     try:
         report_path = Path(

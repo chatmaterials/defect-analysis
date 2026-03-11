@@ -4,3 +4,4 @@
 - Neutral formation energies are useful for screening, but charged-defect corrections and Fermi-level dependence can dominate the final physics.
 - Candidate ranking by formation energy and strain is a triage step, not a full defect thermodynamics workflow.
 - Multi-species chemical-potential terms are essential for substitutional defects; a single chemical potential is generally only meaningful for one-species changes.
+- Screening mode matters: a vacancy-focused screen and a substitutional-defect screen can reasonably rank the same candidates differently.
