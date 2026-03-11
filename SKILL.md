@@ -15,6 +15,7 @@ Use this skill for defect-focused post-processing rather than generic workflow s
 - summarize how stoichiometry changes between pristine and defect cells
 - quantify structural or volume change caused by a defect
 - estimate compact abundance metrics under a temperature and site-density assumption
+- analyze how abundance changes across a temperature window
 - rank multiple defect candidates in balanced, abundant, substitutional, or strain-sensitive modes
 - write a compact defect-analysis report from finished calculations
 
@@ -30,6 +31,8 @@ Supported backends:
   Estimate a neutral defect formation energy, infer the defect type, and optionally estimate abundance metrics.
 - `scripts/analyze_defect_structure.py`
   Compare pristine and defect structures and summarize size, stoichiometry, and inferred defect type.
+- `scripts/analyze_defect_sensitivity.py`
+  Sweep a temperature window and summarize abundance sensitivity.
 - `scripts/compare_defect_candidates.py`
   Rank multiple defect candidates with balanced, abundant, substitutional, or strain-sensitive heuristics.
 - `scripts/export_defect_report.py`

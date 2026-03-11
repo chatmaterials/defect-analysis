@@ -49,6 +49,23 @@ def main() -> None:
     )
     ensure(abs(substitutional["formation_energy_eV"] - 1.5) < 1e-6, "defect-analysis should support multi-species chemical-potential terms")
     ensure("substitutional-like" in substitutional["defect_type"], "defect-analysis should infer a substitutional-like defect")
+    sensitivity = run_json(
+        "scripts/analyze_defect_sensitivity.py",
+        "fixtures/pristine",
+        "fixtures/defect",
+        "--mu",
+        "-4.0",
+        "--temperature",
+        "300",
+        "--temperature",
+        "600",
+        "--temperature",
+        "1000",
+        "--site-density-cm3",
+        "1e22",
+        "--json",
+    )
+    ensure(sensitivity["sensitivity_class"] == "strong-temperature-sensitivity", "defect-analysis should detect strong abundance sensitivity across temperature")
     structure = run_json("scripts/analyze_defect_structure.py", "fixtures/pristine/POSCAR", "fixtures/defect/POSCAR", "--json")
     ensure(structure["species_delta"]["O"] == -1, "defect structure analysis should detect one missing O atom")
     ensure(structure["relative_volume_change_percent"] > 0, "defect structure analysis should detect positive volume expansion")

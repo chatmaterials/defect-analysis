@@ -21,6 +21,7 @@ python3 scripts/analyze_defect_formation.py fixtures/pristine fixtures/defect --
 python3 scripts/analyze_defect_formation.py fixtures/qe/pristine fixtures/qe/defect --mu -4.0 --json
 python3 scripts/analyze_defect_formation.py fixtures/abinit/pristine fixtures/abinit/defect --mu -4.0 --json
 python3 scripts/analyze_defect_formation.py fixtures/substitutional/pristine fixtures/substitutional/defect --mu-term Fe=-6.0 --mu-term Li=-1.5 --json
+python3 scripts/analyze_defect_sensitivity.py fixtures/pristine fixtures/defect --mu -4.0 --temperature 300 --temperature 600 --temperature 1000 --site-density-cm3 1e22 --json
 python3 scripts/analyze_defect_structure.py fixtures/pristine/POSCAR fixtures/defect/POSCAR --json
 python3 scripts/compare_defect_candidates.py fixtures fixtures/candidates/high-energy-vacancy --mu -4.0 --max-volume-change-percent 5.0 --temperature-k 1000 --site-density-cm3 1e22 --target-defect-type vacancy-like --target-concentration-cm3 1e10 --mode balanced --json
 python3 scripts/compare_defect_candidates.py fixtures/substitutional fixtures --mu -4.0 --mu-term Fe=-6.0 --mu-term Li=-1.5 --max-volume-change-percent 5.0 --target-defect-type substitutional-like --mode substitutional --json
